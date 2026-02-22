@@ -1,8 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-import '../models/note_model.dart';
-import '../utils/color_generator.dart';
 import 'widgets/sticky_note.dart';
 
 /// The main collaborative bulletin board screen.
