@@ -42,53 +42,55 @@ class BoardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          '📌 Collaborative Sticky Board',
-          style: TextStyle(fontWeight: FontWeight.bold),
+      // No AppBar — the board IS the entire screen with corkboard background
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/board_background.jpg'),
+            fit: BoxFit.cover,
+          ),
         ),
-        centerTitle: true,
-      ),
-      // ============================================================
-      // TODO: STEP 1 - DELETE THIS STATIC PLACEHOLDER LIST
-      //
-      // We are going to replace this static UI with a dynamic
-      // Firebase StreamBuilder. The StreamBuilder will continuously
-      // listen to our 'sticky_notes' collection using .snapshots().
-      //
-      // Why StreamBuilder instead of FutureBuilder?
-      //   - A Future resolves data ONCE and stops.
-      //   - A Stream keeps an OPEN CONNECTION and fires every time
-      //     ANY document in the collection changes.
-      //
-      // Steps:
-      //   1. Delete the static body below.
-      //   2. Replace it with: StreamBuilder<QuerySnapshot>(
-      //        stream: _notesCollection.snapshots(),
-      //        builder: (context, snapshot) { ... }
-      //      )
-      //   3. Inside the builder:
-      //      a. Handle loading: if snapshot.connectionState == waiting
-      //      b. Handle errors: if snapshot.hasError
-      //      c. Map docs: snapshot.data!.docs.map(NoteModel.fromFirestore)
-      //      d. Return a Stack of StickyNote widgets
-      // ============================================================
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.cloud_off, size: 64, color: Colors.white54),
-            SizedBox(height: 16),
-            Text(
-              'Static placeholder — no Firebase connection yet.',
-              style: TextStyle(fontSize: 16, color: Colors.white70),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Follow TODO: STEP 1 to connect the real-time stream!',
-              style: TextStyle(fontSize: 14, color: Colors.white54),
-            ),
-          ],
+        // ============================================================
+        // TODO: STEP 1 - DELETE THIS STATIC PLACEHOLDER BELOW
+        //
+        // We are going to replace this static UI with a dynamic
+        // Firebase StreamBuilder. The StreamBuilder will continuously
+        // listen to our 'sticky_notes' collection using .snapshots().
+        //
+        // Why StreamBuilder instead of FutureBuilder?
+        //   - A Future resolves data ONCE and stops.
+        //   - A Stream keeps an OPEN CONNECTION and fires every time
+        //     ANY document in the collection changes.
+        //
+        // Steps:
+        //   1. Delete the Center(...) child below.
+        //   2. Replace it with: StreamBuilder<QuerySnapshot>(
+        //        stream: _notesCollection.snapshots(),
+        //        builder: (context, snapshot) { ... }
+        //      )
+        //   3. Inside the builder:
+        //      a. Handle loading: if snapshot.connectionState == waiting
+        //      b. Handle errors: if snapshot.hasError
+        //      c. Map docs: snapshot.data!.docs.map(NoteModel.fromFirestore)
+        //      d. Return a Stack of StickyNote widgets
+        // ============================================================
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.cloud_off, size: 64, color: Colors.white54),
+              SizedBox(height: 16),
+              Text(
+                'Static placeholder — no Firebase connection yet.',
+                style: TextStyle(fontSize: 16, color: Colors.white70),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Follow TODO: STEP 1 to connect the real-time stream!',
+                style: TextStyle(fontSize: 14, color: Colors.white54),
+              ),
+            ],
+          ),
         ),
       ),
       // ─── Floating Action Button ────────────────────────────────

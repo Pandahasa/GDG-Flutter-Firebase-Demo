@@ -60,31 +60,57 @@ class StickyNote extends StatelessWidget {
   /// A square container with a soft drop shadow, dynamic background color,
   /// and centered text label.
   Widget _buildNoteCard() {
-    return Container(
+    return SizedBox(
       width: 140,
       height: 140,
-      decoration: BoxDecoration(
-        color: ColorGenerator.fromCode(note.colorCode),
-        borderRadius: BorderRadius.circular(4),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 6,
-            offset: const Offset(2, 3),
+      child: Stack(
+        children: [
+          // Note body
+          Container(
+            width: 140,
+            height: 140,
+            decoration: BoxDecoration(
+              color: ColorGenerator.fromCode(note.colorCode),
+              borderRadius: BorderRadius.circular(4),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 6,
+                  offset: const Offset(2, 3),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(12),
+            child: Center(
+              child: Text(
+                note.text,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+          ),
+          // Delete button (top-left)
+          Positioned(
+            top: 2,
+            left: 2,
+            child: GestureDetector(
+              onTap: () => _notesCollection.doc(note.id).delete(),
+              child: Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.4),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.close, size: 14, color: Colors.white),
+              ),
+            ),
           ),
         ],
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Center(
-        child: Text(
-          note.text,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
       ),
     );
   }
