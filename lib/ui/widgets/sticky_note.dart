@@ -18,43 +18,41 @@ class StickyNote extends StatelessWidget {
   static final _notesCollection =
       FirebaseFirestore.instance.collection('sticky_notes');
 
-  /// Handles the continuous drag event.
-  ///
-  /// Calculates new coordinates from the drag delta and fires an update
-  /// to Firestore. Every connected client's [StreamBuilder] will pick up
-  /// the new position instantly.
-  void _onDrag(DragUpdateDetails details, BuildContext context) {
-    final screenSize = MediaQuery.of(context).size;
-
-    // Calculate new position from drag delta
-    double newX = note.xPos + details.delta.dx;
-    double newY = note.yPos + details.delta.dy;
-
-    // Clamp coordinates to prevent the note from being dragged off-canvas
-    newX = newX.clamp(0.0, screenSize.width - 150);
-    newY = newY.clamp(0.0, screenSize.height - 200);
-
-    // Push the updated coordinates to Firestore
-    _notesCollection.doc(note.id).update({
-      'x_pos': newX,
-      'y_pos': newY,
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    // ─── Positioned + GestureDetector Wrapper ──────────────────
-    // The Positioned widget maps the Firestore x_pos/y_pos fields
-    // directly to the 'left' and 'top' properties of the Stack.
-    // The GestureDetector captures drag input via onPanUpdate.
-    return Positioned(
-      left: note.xPos,
-      top: note.yPos,
-      child: GestureDetector(
-        onPanUpdate: (details) => _onDrag(details, context),
-        child: _buildNoteCard(),
-      ),
-    );
+    // ============================================================
+    // TODO: STEP 2 - WRAP THE CONTAINER WITH POSITIONED + GESTURE DETECTOR
+    //
+    // Right now _buildNoteCard() is returned directly with no positioning
+    // or drag interaction. We need to:
+    //
+    //   1. Wrap it in a Positioned widget:
+    //      Positioned(
+    //        left: note.xPos,    ← maps to Firestore 'x_pos'
+    //        top: note.yPos,     ← maps to Firestore 'y_pos'
+    //        child: ...
+    //      )
+    //
+    //   2. Inside Positioned, wrap _buildNoteCard() with GestureDetector:
+    //      GestureDetector(
+    //        onPanUpdate: (details) {
+    //          // Calculate new coordinates from drag delta:
+    //          final screen = MediaQuery.of(context).size;
+    //          double newX = (note.xPos + details.delta.dx)
+    //              .clamp(0.0, screen.width - 150);
+    //          double newY = (note.yPos + details.delta.dy)
+    //              .clamp(0.0, screen.height - 200);
+    //
+    //          // Push update to Firestore:
+    //          _notesCollection.doc(note.id).update({
+    //            'x_pos': newX,
+    //            'y_pos': newY,
+    //          });
+    //        },
+    //        child: _buildNoteCard(),
+    //      )
+    // ============================================================
+    return _buildNoteCard();
   }
 
   /// Builds the visual sticky note card.

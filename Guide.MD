@@ -33,7 +33,7 @@ While Firebase allows for the initialization of Cloud Firestore in a default "Te
 `service cloud.firestore {`
 `  match /databases/{database}/documents {`
 `    match /sticky_notes/{document=**} {`
-`      allow read, write: if request.time < timestamp.date(YYYY, MM, DD);`
+`      allow read, write: if request.time < timestamp.date(2026, 02, 27);`
 `    }`
 `  }`
 `}`

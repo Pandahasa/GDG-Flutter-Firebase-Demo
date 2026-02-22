@@ -19,18 +19,26 @@ class BoardScreen extends StatelessWidget {
   static final _notesCollection =
       FirebaseFirestore.instance.collection('sticky_notes');
 
-  /// Creates a new sticky note document in Firestore with random position
-  /// and color, using screen dimensions to keep it within bounds.
+  // ============================================================
+  // TODO: STEP 3 - IMPLEMENT THE ADD NOTE FUNCTION
+  //
+  // When the FloatingActionButton is tapped, we need to create a
+  // brand new document in the 'sticky_notes' Firestore collection.
+  //
+  // Use: _notesCollection.add(newNote.toJson())
+  //
+  // Steps:
+  //   1. Get the screen size using MediaQuery.of(context).size
+  //   2. Create a NoteModel with:
+  //      - id: '' (Firestore auto-generates)
+  //      - text: 'New Note 📝'
+  //      - colorCode: ColorGenerator.randomColorCode()
+  //      - xPos: ColorGenerator.randomX(size.width)
+  //      - yPos: ColorGenerator.randomY(size.height)
+  //   3. Call: await _notesCollection.add(newNote.toJson())
+  // ============================================================
   Future<void> _addNote(BuildContext context) async {
-    final size = MediaQuery.of(context).size;
-    final newNote = NoteModel(
-      id: '', // Firestore auto-generates the document ID
-      text: 'New Note 📝',
-      colorCode: ColorGenerator.randomColorCode(),
-      xPos: ColorGenerator.randomX(size.width),
-      yPos: ColorGenerator.randomY(size.height),
-    );
-    await _notesCollection.add(newNote.toJson());
+    // YOUR CODE HERE
   }
 
   @override
@@ -43,47 +51,47 @@ class BoardScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      // ─── Real-Time StreamBuilder ───────────────────────────────
-      // The StreamBuilder continuously listens to the 'sticky_notes'
-      // collection. Every time ANY connected user adds, moves, or
-      // modifies a note, this builder fires and rebuilds the entire
-      // Stack with updated positions.
-      body: StreamBuilder<QuerySnapshot>(
-        stream: _notesCollection.snapshots(),
-        builder: (context, snapshot) {
-          // Handle loading state
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          // Handle error state
-          if (snapshot.hasError) {
-            return Center(
-              child: Text('Error: ${snapshot.error}'),
-            );
-          }
-
-          // Map Firestore documents to NoteModel objects
-          final notes = snapshot.data!.docs
-              .map((doc) => NoteModel.fromFirestore(doc))
-              .toList();
-
-          // If the collection is empty, show a helpful prompt
-          if (notes.isEmpty) {
-            return const Center(
-              child: Text(
-                'No notes yet!\nTap the + button to add one. 🎉',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, color: Colors.white70),
-              ),
-            );
-          }
-
-          // Render all notes in a Stack using absolute positioning
-          return Stack(
-            children: notes.map((note) => StickyNote(note: note)).toList(),
-          );
-        },
+      // ============================================================
+      // TODO: STEP 1 - DELETE THIS STATIC PLACEHOLDER LIST
+      //
+      // We are going to replace this static UI with a dynamic
+      // Firebase StreamBuilder. The StreamBuilder will continuously
+      // listen to our 'sticky_notes' collection using .snapshots().
+      //
+      // Why StreamBuilder instead of FutureBuilder?
+      //   - A Future resolves data ONCE and stops.
+      //   - A Stream keeps an OPEN CONNECTION and fires every time
+      //     ANY document in the collection changes.
+      //
+      // Steps:
+      //   1. Delete the static body below.
+      //   2. Replace it with: StreamBuilder<QuerySnapshot>(
+      //        stream: _notesCollection.snapshots(),
+      //        builder: (context, snapshot) { ... }
+      //      )
+      //   3. Inside the builder:
+      //      a. Handle loading: if snapshot.connectionState == waiting
+      //      b. Handle errors: if snapshot.hasError
+      //      c. Map docs: snapshot.data!.docs.map(NoteModel.fromFirestore)
+      //      d. Return a Stack of StickyNote widgets
+      // ============================================================
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.cloud_off, size: 64, color: Colors.white54),
+            SizedBox(height: 16),
+            Text(
+              'Static placeholder — no Firebase connection yet.',
+              style: TextStyle(fontSize: 16, color: Colors.white70),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Follow TODO: STEP 1 to connect the real-time stream!',
+              style: TextStyle(fontSize: 14, color: Colors.white54),
+            ),
+          ],
+        ),
       ),
       // ─── Floating Action Button ────────────────────────────────
       floatingActionButton: FloatingActionButton.extended(
