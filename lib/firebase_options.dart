@@ -42,11 +42,13 @@ class DefaultFirebaseOptions {
   // -------------------------------------------------------
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'YOUR-API-KEY',
-    appId: 'YOUR-APP-ID',
-    messagingSenderId: 'YOUR-SENDER-ID',
-    projectId: 'YOUR-PROJECT-ID',
-    storageBucket: 'YOUR-PROJECT-ID.firebasestorage.app',
+    apiKey: 'AIzaSyCCXipQC9g4U5loveTManZnxs9xVEP8nFs',
+    appId: '1:206029407644:web:285a4fe0cc6d56a7787459',
+    messagingSenderId: '206029407644',
+    projectId: 'flutfire-demo',
+    authDomain: 'flutfire-demo.firebaseapp.com',
+    storageBucket: 'flutfire-demo.firebasestorage.app',
+    measurementId: 'G-JQBJE33G4Z',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
