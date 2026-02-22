@@ -6,52 +6,112 @@ import '../../utils/color_generator.dart';
 
 /// A single draggable sticky note rendered on the collaborative board.
 ///
-/// Wrapped in a [Positioned] widget to place it at the exact (x, y)
-/// coordinates stored in Firestore, and a [GestureDetector] to capture
-/// drag events and synchronize position updates back to the database.
-class StickyNote extends StatelessWidget {
+/// Uses local state to track position during drags for smooth, 1:1 cursor
+/// tracking. Syncs the final position to Firestore on drag end so all
+/// connected clients see the updated location.
+class StickyNote extends StatefulWidget {
   final NoteModel note;
 
   const StickyNote({super.key, required this.note});
 
+  @override
+  State<StickyNote> createState() => _StickyNoteState();
+}
+
+class _StickyNoteState extends State<StickyNote> {
   /// Reference to the Firestore collection for coordinate updates.
   static final _notesCollection =
       FirebaseFirestore.instance.collection('sticky_notes');
 
-  /// Handles the continuous drag event.
-  ///
-  /// Calculates new coordinates from the drag delta and fires an update
-  /// to Firestore. Every connected client's [StreamBuilder] will pick up
-  /// the new position instantly.
-  void _onDrag(DragUpdateDetails details, BuildContext context) {
+  /// Local position tracked during a drag for instant visual feedback.
+  late double _localX;
+  late double _localY;
+  bool _isDragging = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _localX = widget.note.xPos;
+    _localY = widget.note.yPos;
+  }
+
+  @override
+  void didUpdateWidget(covariant StickyNote oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Only sync from Firestore when NOT actively dragging
+    if (!_isDragging) {
+      _localX = widget.note.xPos;
+      _localY = widget.note.yPos;
+    }
+  }
+
+  void _onDragStart(DragStartDetails details) {
+    _isDragging = true;
+  }
+
+  void _onDragUpdate(DragUpdateDetails details) {
     final screenSize = MediaQuery.of(context).size;
-
-    // Calculate new position from drag delta
-    double newX = note.xPos + details.delta.dx;
-    double newY = note.yPos + details.delta.dy;
-
-    // Clamp coordinates to prevent the note from being dragged off-canvas
-    newX = newX.clamp(0.0, screenSize.width - 150);
-    newY = newY.clamp(0.0, screenSize.height - 200);
-
-    // Push the updated coordinates to Firestore
-    _notesCollection.doc(note.id).update({
-      'x_pos': newX,
-      'y_pos': newY,
+    setState(() {
+      _localX = (_localX + details.delta.dx).clamp(0.0, screenSize.width - 150);
+      _localY =
+          (_localY + details.delta.dy).clamp(0.0, screenSize.height - 200);
     });
+  }
+
+  void _onDragEnd(DragEndDetails details) {
+    _isDragging = false;
+    // Push final position to Firestore
+    _notesCollection.doc(widget.note.id).update({
+      'x_pos': _localX,
+      'y_pos': _localY,
+    });
+  }
+
+  /// Shows a dialog to edit the note's text, then updates Firestore.
+  void _editNote(BuildContext context) async {
+    final controller = TextEditingController(text: widget.note.text);
+    final newText = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Note'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLines: 3,
+          maxLength: 80,
+          decoration: const InputDecoration(
+            hintText: 'Update your message...',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (newText != null && newText.trim().isNotEmpty) {
+      _notesCollection.doc(widget.note.id).update({'text': newText.trim()});
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // ─── Positioned + GestureDetector Wrapper ──────────────────
-    // The Positioned widget maps the Firestore x_pos/y_pos fields
-    // directly to the 'left' and 'top' properties of the Stack.
-    // The GestureDetector captures drag input via onPanUpdate.
     return Positioned(
-      left: note.xPos,
-      top: note.yPos,
+      left: _localX,
+      top: _localY,
       child: GestureDetector(
-        onPanUpdate: (details) => _onDrag(details, context),
+        onPanStart: _onDragStart,
+        onPanUpdate: _onDragUpdate,
+        onPanEnd: _onDragEnd,
+        onDoubleTap: () => _editNote(context),
         child: _buildNoteCard(),
       ),
     );
@@ -62,31 +122,57 @@ class StickyNote extends StatelessWidget {
   /// A square container with a soft drop shadow, dynamic background color,
   /// and centered text label.
   Widget _buildNoteCard() {
-    return Container(
+    return SizedBox(
       width: 140,
       height: 140,
-      decoration: BoxDecoration(
-        color: ColorGenerator.fromCode(note.colorCode),
-        borderRadius: BorderRadius.circular(4),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 6,
-            offset: const Offset(2, 3),
+      child: Stack(
+        children: [
+          // Note body
+          Container(
+            width: 140,
+            height: 140,
+            decoration: BoxDecoration(
+              color: ColorGenerator.fromCode(widget.note.colorCode),
+              borderRadius: BorderRadius.circular(4),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 6,
+                  offset: const Offset(2, 3),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(12),
+            child: Center(
+              child: Text(
+                widget.note.text,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+          ),
+          // Delete button (top-left)
+          Positioned(
+            top: 2,
+            left: 2,
+            child: GestureDetector(
+              onTap: () => _notesCollection.doc(widget.note.id).delete(),
+              child: Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.4),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.close, size: 14, color: Colors.white),
+              ),
+            ),
           ),
         ],
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Center(
-        child: Text(
-          note.text,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
       ),
     );
   }

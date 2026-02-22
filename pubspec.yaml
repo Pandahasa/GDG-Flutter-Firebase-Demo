@@ -1,6 +1,6 @@
 name: gdg_flutter_firebase_demo
 description: A real-time collaborative digital bulletin board built with Flutter and Firebase Cloud Firestore.
-publish_to: 'none'
+publish_to: "none"
 version: 1.0.0+1
 
 environment:
@@ -19,3 +19,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/

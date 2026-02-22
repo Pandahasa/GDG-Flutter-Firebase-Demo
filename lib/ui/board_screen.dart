@@ -19,13 +19,43 @@ class BoardScreen extends StatelessWidget {
   static final _notesCollection =
       FirebaseFirestore.instance.collection('sticky_notes');
 
-  /// Creates a new sticky note document in Firestore with random position
-  /// and color, using screen dimensions to keep it within bounds.
+  /// Shows a dialog for the user to type a custom note message,
+  /// then creates a new sticky note document in Firestore.
   Future<void> _addNote(BuildContext context) async {
+    final controller = TextEditingController();
+    final message = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('New Sticky Note'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLines: 3,
+          maxLength: 80,
+          decoration: const InputDecoration(
+            hintText: 'Write your message...',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+
+    if (message == null || message.trim().isEmpty) return;
+
     final size = MediaQuery.of(context).size;
     final newNote = NoteModel(
-      id: '', // Firestore auto-generates the document ID
-      text: 'New Note 📝',
+      id: '',
+      text: message.trim(),
       colorCode: ColorGenerator.randomColorCode(),
       xPos: ColorGenerator.randomX(size.width),
       yPos: ColorGenerator.randomY(size.height),
@@ -36,54 +66,57 @@ class BoardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          '📌 Collaborative Sticky Board',
-          style: TextStyle(fontWeight: FontWeight.bold),
+      // No AppBar — the board IS the entire screen
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/board_background.jpg'),
+            fit: BoxFit.cover,
+          ),
         ),
-        centerTitle: true,
-      ),
-      // ─── Real-Time StreamBuilder ───────────────────────────────
-      // The StreamBuilder continuously listens to the 'sticky_notes'
-      // collection. Every time ANY connected user adds, moves, or
-      // modifies a note, this builder fires and rebuilds the entire
-      // Stack with updated positions.
-      body: StreamBuilder<QuerySnapshot>(
-        stream: _notesCollection.snapshots(),
-        builder: (context, snapshot) {
-          // Handle loading state
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+        child: StreamBuilder<QuerySnapshot>(
+          stream: _notesCollection.snapshots(),
+          builder: (context, snapshot) {
+            // Handle loading state
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          // Handle error state
-          if (snapshot.hasError) {
-            return Center(
-              child: Text('Error: ${snapshot.error}'),
+            // Handle error state
+            if (snapshot.hasError) {
+              return Center(
+                child: Text('Error: ${snapshot.error}'),
+              );
+            }
+
+            // Map Firestore documents to NoteModel objects
+            final notes = snapshot.data!.docs
+                .map((doc) => NoteModel.fromFirestore(doc))
+                .toList();
+
+            return Stack(
+              children: [
+                // Empty-state prompt
+                if (notes.isEmpty)
+                  const Center(
+                    child: Text(
+                      'Tap + to pin your first note!',
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.white70,
+                        fontWeight: FontWeight.bold,
+                        shadows: [
+                          Shadow(blurRadius: 4, color: Colors.black54),
+                        ],
+                      ),
+                    ),
+                  ),
+                // Render all notes using absolute positioning
+                ...notes.map((note) => StickyNote(note: note)),
+              ],
             );
-          }
-
-          // Map Firestore documents to NoteModel objects
-          final notes = snapshot.data!.docs
-              .map((doc) => NoteModel.fromFirestore(doc))
-              .toList();
-
-          // If the collection is empty, show a helpful prompt
-          if (notes.isEmpty) {
-            return const Center(
-              child: Text(
-                'No notes yet!\nTap the + button to add one. 🎉',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, color: Colors.white70),
-              ),
-            );
-          }
-
-          // Render all notes in a Stack using absolute positioning
-          return Stack(
-            children: notes.map((note) => StickyNote(note: note)).toList(),
-          );
-        },
+          },
+        ),
       ),
       // ─── Floating Action Button ────────────────────────────────
       floatingActionButton: FloatingActionButton.extended(
