@@ -1,0 +1,11 @@
+{
+  "name": "Sticky Board",
+  "short_name": "StickyBoard",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0175C2",
+  "theme_color": "#0175C2",
+  "description": "A real-time collaborative digital bulletin board.",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false
+}
