@@ -19,6 +19,10 @@ class BoardScreen extends StatelessWidget {
   static final _notesCollection =
       FirebaseFirestore.instance.collection('sticky_notes');
 
+  /// Sorted stream — newest notes appear on top of the stack.
+  Stream<QuerySnapshot> get _notesStream =>
+      _notesCollection.orderBy('created_at', descending: true).snapshots();
+
   /// Shows a dialog for the user to type a custom note message,
   /// then creates a new sticky note document in Firestore.
   Future<void> _addNote(BuildContext context) async {
@@ -60,7 +64,10 @@ class BoardScreen extends StatelessWidget {
       xPos: ColorGenerator.randomX(size.width),
       yPos: ColorGenerator.randomY(size.height),
     );
-    await _notesCollection.add(newNote.toJson());
+    await _notesCollection.add({
+      ...newNote.toJson(),
+      'created_at': FieldValue.serverTimestamp(),
+    });
   }
 
   @override
@@ -75,7 +82,7 @@ class BoardScreen extends StatelessWidget {
           ),
         ),
         child: StreamBuilder<QuerySnapshot>(
-          stream: _notesCollection.snapshots(),
+          stream: _notesStream,
           builder: (context, snapshot) {
             // Handle loading state
             if (snapshot.connectionState == ConnectionState.waiting) {
