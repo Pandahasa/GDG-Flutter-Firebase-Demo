@@ -18,22 +18,48 @@ class BoardScreen extends StatelessWidget {
       FirebaseFirestore.instance.collection('sticky_notes');
 
   // ============================================================
-  // TODO: STEP 3 - IMPLEMENT THE ADD NOTE FUNCTION
+  // TODO: STEP 5 — SORT NOTES BY CREATION TIME
   //
-  // When the FloatingActionButton is tapped, we need to create a
-  // brand new document in the 'sticky_notes' Firestore collection.
+  // Right now notes appear in no particular order. After you've
+  // completed STEP 3 (which saves a 'created_at' server timestamp
+  // with each note), upgrade this getter to sort newest-first:
   //
-  // Use: _notesCollection.add(newNote.toJson())
+  //   _notesCollection
+  //       .orderBy('created_at', descending: true)
+  //       .snapshots()
+  //
+  // This teaches Firestore QUERY COMPOSITION — you build queries
+  // by chaining methods like .orderBy(), .where(), .limit(), etc.
+  // ============================================================
+  Stream<QuerySnapshot> get _notesStream => _notesCollection.snapshots();
+
+  // ============================================================
+  // TODO: STEP 3 — CREATE A NEW NOTE
+  //
+  // Show a dialog for the user to type a message, then create a
+  // new Firestore document.
   //
   // Steps:
-  //   1. Get the screen size using MediaQuery.of(context).size
-  //   2. Create a NoteModel with:
+  //   1. Show an AlertDialog with a TextField (see STEP 4 for
+  //      a similar dialog pattern in sticky_note.dart)
+  //   2. If the user submits text, build a NoteModel:
   //      - id: '' (Firestore auto-generates)
-  //      - text: 'New Note 📝'
+  //      - text: the user's message
   //      - colorCode: ColorGenerator.randomColorCode()
   //      - xPos: ColorGenerator.randomX(size.width)
   //      - yPos: ColorGenerator.randomY(size.height)
-  //   3. Call: await _notesCollection.add(newNote.toJson())
+  //   3. Write to Firestore with a server timestamp:
+  //      await _notesCollection.add({
+  //        ...newNote.toJson(),
+  //        'created_at': FieldValue.serverTimestamp(),
+  //      });
+  //
+  // FieldValue.serverTimestamp() stamps creation time on the
+  // server, not the client — important for consistent ordering.
+  //
+  // Imports needed at the top of the file:
+  //   import '../models/note_model.dart';
+  //   import '../utils/color_generator.dart';
   // ============================================================
   Future<void> _addNote(BuildContext context) async {
     // YOUR CODE HERE
@@ -42,7 +68,7 @@ class BoardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // No AppBar — the board IS the entire screen with corkboard background
+      // No AppBar — the board IS the entire screen
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
@@ -51,28 +77,30 @@ class BoardScreen extends StatelessWidget {
           ),
         ),
         // ============================================================
-        // TODO: STEP 1 - DELETE THIS STATIC PLACEHOLDER BELOW
+        // TODO: STEP 1 — CONNECT THE REAL-TIME STREAM
         //
-        // We are going to replace this static UI with a dynamic
-        // Firebase StreamBuilder. The StreamBuilder will continuously
-        // listen to our 'sticky_notes' collection using .snapshots().
+        // Replace the static placeholder below with a StreamBuilder
+        // that listens to Firestore and rebuilds the UI automatically.
         //
-        // Why StreamBuilder instead of FutureBuilder?
-        //   - A Future resolves data ONCE and stops.
-        //   - A Stream keeps an OPEN CONNECTION and fires every time
-        //     ANY document in the collection changes.
+        //   StreamBuilder<QuerySnapshot>(
+        //     stream: _notesStream,
+        //     builder: (context, snapshot) { ... }
+        //   )
         //
-        // Steps:
-        //   1. Delete the Center(...) child below.
-        //   2. Replace it with: StreamBuilder<QuerySnapshot>(
-        //        stream: _notesCollection.snapshots(),
-        //        builder: (context, snapshot) { ... }
-        //      )
-        //   3. Inside the builder:
-        //      a. Handle loading: if snapshot.connectionState == waiting
-        //      b. Handle errors: if snapshot.hasError
-        //      c. Map docs: snapshot.data!.docs.map(NoteModel.fromFirestore)
-        //      d. Return a Stack of StickyNote widgets
+        // Inside the builder:
+        //   a. Handle loading: snapshot.connectionState == waiting
+        //   b. Handle errors: snapshot.hasError
+        //   c. Map docs to models:
+        //      snapshot.data!.docs
+        //          .map((doc) => NoteModel.fromFirestore(doc)).toList()
+        //   d. Return a Stack of StickyNote widgets
+        //
+        // Why StreamBuilder?
+        //   A Future resolves ONCE. A Stream stays OPEN — every time
+        //   any user changes any note, this builder fires again.
+        //
+        // Imports needed at the top of the file:
+        //   import '../models/note_model.dart';
         // ============================================================
         child: Center(
           child: Column(
@@ -86,7 +114,7 @@ class BoardScreen extends StatelessWidget {
               ),
               SizedBox(height: 8),
               Text(
-                'Follow TODO: STEP 1 to connect the real-time stream!',
+                'Complete STEP 1 to connect the real-time stream!',
                 style: TextStyle(fontSize: 14, color: Colors.white54),
               ),
             ],
