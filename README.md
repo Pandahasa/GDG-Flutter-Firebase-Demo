@@ -1,0 +1,1 @@
+GDG at San Jose State University presents a Flutter & Firebase Demo to show students the capabilities of Google's stack that work perfectly with each other. This demo will show students a sticky note / bulletin board application that can be connected to a Firebase server where students will see each others' notes in live time. 
