@@ -62,7 +62,56 @@ class BoardScreen extends StatelessWidget {
   //   import '../utils/color_generator.dart';
   // ============================================================
   Future<void> _addNote(BuildContext context) async {
-    // YOUR CODE HERE
+    // create a controller to capture what the user types
+    final controller = TextEditingController();
+    // showDialog pauses execution and waits for the user to submit or cancel
+    final message = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('New Sticky Note'),
+        content: TextField(
+          controller: controller, // binds the text field to our controller
+          autofocus: true, // keyboard opens immediately
+          maxLines: 3,
+          maxLength: 80, // limit to keep notes short
+          decoration: const InputDecoration(
+            hintText: 'Write your message...',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          // Cancel — pops the dialog returning null (no value)
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          // Add — pops the dialog returning the typed text
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+
+    // if user cancelled or typed nothing, bail out
+    if (message == null || message.trim().isEmpty) return;
+
+    // get screen dimensions so we can place the note randomly within bounds
+    final size = MediaQuery.of(context).size;
+    // build our data model with random color and position
+    final newNote = NoteModel(
+      id: '', // Firestore will auto-generate the document ID
+      text: message.trim(),
+      colorCode: ColorGenerator.randomColorCode(), // pick a random pastel color
+      xPos: ColorGenerator.randomX(size.width), // random x within screen
+      yPos: ColorGenerator.randomY(size.height), // random y within screen
+    );
+    // write to Firestore — .add() creates a new document with auto ID
+    await _notesCollection.add({
+      ...newNote.toJson(), // spread the model fields into the map
+      'created_at': FieldValue.serverTimestamp(), // server clock, not client — reliable for sorting
+    }); 
   }
 
   @override
