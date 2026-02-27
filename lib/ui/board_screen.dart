@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-
+import '../models/note_model.dart';
 import 'widgets/sticky_note.dart';
 
 /// The main collaborative bulletin board screen.
@@ -102,23 +102,46 @@ class BoardScreen extends StatelessWidget {
         // Imports needed at the top of the file:
         //   import '../models/note_model.dart';
         // ============================================================
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.cloud_off, size: 64, color: Colors.white54),
-              SizedBox(height: 16),
-              Text(
-                'Static placeholder — no Firebase connection yet.',
-                style: TextStyle(fontSize: 16, color: Colors.white70),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Complete STEP 1 to connect the real-time stream!',
-                style: TextStyle(fontSize: 14, color: Colors.white54),
-              ),
-            ],
-          ),
+        // StreamBuilder listens to a Firestore stream and rebuilds the UI on every change
+        child: StreamBuilder<QuerySnapshot>(
+          stream: _notesStream, // the live stream from our Firestore collection
+          builder: (context, snapshot) {
+            // while the first batch of data is loading, show a spinner
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            // if something went wrong with the connection, show the error
+            if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            }
+
+            // convert each raw Firestore document into our NoteModel dart object
+            final notes = snapshot.data!.docs
+                .map((doc) => NoteModel.fromFirestore(doc))
+                .toList();
+
+            // Stack lets us layer widgets on top of each other with absolute positioning
+            return Stack(
+              children: [
+                // show a hint message when the board is empty
+                if (notes.isEmpty)
+                  const Center(
+                    child: Text(
+                      'Tap + to pin your first note!',
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.white70,
+                        fontWeight: FontWeight.bold,
+                        shadows: [Shadow(blurRadius: 4, color: Colors.black54)],
+                      ),
+                    ),
+                  ),
+                // spread all notes into the Stack — each StickyNote positions itself
+                ...notes.map((note) => StickyNote(note: note)),
+              ],
+            );
+          },
         ),
       ),
       // ─── Floating Action Button ────────────────────────────────

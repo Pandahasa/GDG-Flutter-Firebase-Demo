@@ -152,7 +152,8 @@ class _StickyNoteState extends State<StickyNote> {
             left: 2,
             child: GestureDetector(
               onTap: () {
-                // YOUR CODE HERE
+                // grab the document by its ID and delete it — StreamBuilder handles the UI update
+                _notesCollection.doc(widget.note.id).delete();
               },
               child: Container(
                 width: 20,
