@@ -86,12 +86,54 @@ Press `q` in the terminal to quit.
 
 ## Troubleshooting
 
-| Problem                 | Fix                                                      |
-| ----------------------- | -------------------------------------------------------- |
-| `flutter` not found     | Add Flutter's `bin` folder to your system PATH           |
-| Chrome not detected     | Set `CHROME_EXECUTABLE` env variable to your Chrome path |
-| `flutter pub get` fails | Check your internet connection and retry                 |
-| Build errors on run     | Run `flutter clean` then `flutter pub get` again         |
+| Problem                 | Fix                                                        |
+| ----------------------- | ---------------------------------------------------------- |
+| `flutter` not found     | Add Flutter's `bin` folder to your system PATH (see below) |
+| `flutterfire` not found | Add the Dart pub global bin to your PATH (see below)       |
+| Chrome not detected     | Set `CHROME_EXECUTABLE` env variable to your Chrome path   |
+| `flutter pub get` fails | Check your internet connection and retry                   |
+| Build errors on run     | Run `flutter clean` then `flutter pub get` again           |
+
+### Fixing "command not found" on macOS (`.zshrc`)
+
+macOS uses **zsh** as the default shell. If you get `flutter: command not found` or `flutterfire: command not found`, you need to add them to your PATH via `~/.zshrc`.
+
+1. Open your `.zshrc` in a text editor:
+
+   ```
+   open ~/.zshrc
+   ```
+
+   If the file doesn't exist yet, create it:
+
+   ```
+   touch ~/.zshrc && open ~/.zshrc
+   ```
+
+2. Add the following lines at the bottom (adjust the Flutter path to where you installed it):
+
+   ```bash
+   # Flutter SDK
+   export PATH="$HOME/development/flutter/bin:$PATH"
+
+   # Dart pub global packages (needed for flutterfire_cli)
+   export PATH="$HOME/.pub-cache/bin:$PATH"
+   ```
+
+   > **Tip:** If you installed Flutter somewhere else (e.g. `/Users/yourname/flutter`), replace `$HOME/development/flutter` with your actual path. You can find it by running `which flutter` in a terminal where Flutter already works, or checking where you unzipped it.
+
+3. Save the file, then reload it:
+
+   ```
+   source ~/.zshrc
+   ```
+
+4. Verify the commands work:
+
+   ```
+   flutter --version
+   dart --version
+   ```
 
 If you're stuck, don't worry — we'll help sort it out at the start of the workshop.
 
